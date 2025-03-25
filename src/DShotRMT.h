@@ -290,6 +290,8 @@ class DShotRMT
 
      // ratio of passed to failed checksums
      float get_telem_success_rate();
+     void set_foc_phases(foc_phases_t foc_phases);
+     void do_foc();
 
     private:
      Chrono dshot_timer;    // A timer used to measure the time between DShot packets.
