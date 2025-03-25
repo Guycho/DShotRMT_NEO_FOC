@@ -4,6 +4,7 @@
 #include <Arduino.h>
 
 // The RMT (Remote Control) module library is used for generating the DShot signal.
+#include <Chrono.h>
 #include <driver/rmt_rx.h>
 #include <driver/rmt_tx.h>
 
@@ -249,74 +250,82 @@ typedef struct dshot_config_s
 
 } dshot_config_t;
 
-
+typedef struct foc_phases_t {
+    float phase_a;
+    float phase_b;
+    float phase_c;
+} foc_phases_t;
 
 class DShotRMT
 {
     
     public:
     //constructors and destructors
-	DShotRMT();
-    DShotRMT(uint8_t pin);
-	~DShotRMT();
+     DShotRMT(uint16_t delay);
+     DShotRMT(uint8_t pin, uint16_t delay);
+     ~DShotRMT();
 
+     // interface commands (with safe defaults)
+     void begin(dshot_mode_t dshot_mode = DSHOT_OFF,
+       bidirectional_mode_t is_bidirectional = NO_BIDIRECTION, uint16_t magnet_count = 14);
+     void begin(uint8_t pin, dshot_mode_t dshot_mode = DSHOT_OFF,
+       bidirectional_mode_t is_bidirectional = NO_BIDIRECTION, uint16_t magnet_count = 14);
 
-    //interface commands (with safe defaults)
-    void begin(dshot_mode_t dshot_mode = DSHOT_OFF, bidirectional_mode_t is_bidirectional = NO_BIDIRECTION, uint16_t magnet_count = 14);
-	void begin(uint8_t pin, dshot_mode_t dshot_mode = DSHOT_OFF, bidirectional_mode_t is_bidirectional = NO_BIDIRECTION, uint16_t magnet_count = 14);
+     dshot_send_packet_exit_mode_t send_dshot_value(uint16_t throttle_value,
+       telemetric_request_t telemetric_request = NO_TELEMETRIC);
 
-	dshot_send_packet_exit_mode_t send_dshot_value(uint16_t throttle_value, telemetric_request_t telemetric_request = NO_TELEMETRIC);
-    
-    void prepare_dshot_value(uint16_t throttle_value, telemetric_request_t telemetric_request = NO_TELEMETRIC);
-    dshot_send_packet_exit_mode_t send_last_value();
+     void prepare_dshot_value(uint16_t throttle_value,
+       telemetric_request_t telemetric_request = NO_TELEMETRIC);
+     dshot_send_packet_exit_mode_t send_last_value();
 
+     // uint16_t get_dshot_RPM();
+     // function now returns its fail state to the caller
 
+     // peeks into the queue and gets the response from the ESC
+     dshot_get_packet_exit_mode_t get_dshot_packet(uint32_t* value,
+       extended_telem_type_t* packetType = NULL);
 
-    //uint16_t get_dshot_RPM();
-    //function now returns its fail state to the caller
+     // converts a dshot packet into an equivalent voltage (as specified by dshot specs)
+     float convert_packet_to_volts(uint8_t value);
 
-    //peeks into the queue and gets the response from the ESC
-    dshot_get_packet_exit_mode_t get_dshot_packet(uint32_t* value, extended_telem_type_t* packetType = NULL);
-    
-    //converts a dshot packet into an equivalent voltage (as specified by dshot specs)
-    float convert_packet_to_volts(uint8_t value);
-
-    
-    //ratio of passed to failed checksums
-    float get_telem_success_rate();
+     // ratio of passed to failed checksums
+     float get_telem_success_rate();
 
     private:
+     Chrono dshot_timer;    // A timer used to measure the time between DShot packets.
+     uint16_t dshot_delay;  // The delay between DShot packets in microseconds.
+     foc_phases_t m_foc_phases;
+     uint8_t foc_index = 0;
 
+     // thread-safe queue object that the RX callback uses
+     QueueHandle_t receive_queue;
 
-    //thread-safe queue object that the RX callback uses
-    QueueHandle_t receive_queue;
+     // new data will be dumped in here from the callback (size doesn't need to be exact, we make it
+     // bigger to be safe) (I think it isn't thread safe to touch this while RMT callbacks are
+     //running)
+     rmt_symbol_word_t dshot_rx_rmt_item[64] = {};
 
-    //new data will be dumped in here from the callback (size doesn't need to be exact, we make it bigger to be safe)
-    //(I think it isn't thread safe to touch this while RMT callbacks are running)
-    rmt_symbol_word_t dshot_rx_rmt_item[64] = {};
+     // where the TX raw frame info lives (to be sent out)
+     rmt_symbol_word_t dshot_tx_rmt_item[DSHOT_PACKET_LENGTH] = {};
 
-    //where the TX raw frame info lives (to be sent out)
-    rmt_symbol_word_t dshot_tx_rmt_item[DSHOT_PACKET_LENGTH] = {};
+     // all the settings for setting up the ESC channels
+     dshot_config_t dshot_config = {};
 
-    //all the settings for setting up the ESC channels 
-    dshot_config_t dshot_config = {};
+     // used to determine telemetry success rate when reading values sent from the ESC
+     uint32_t successful_packets = 0;
+     uint32_t error_packets = 0;
 
-    //used to determine telemetry success rate when reading values sent from the ESC
-    uint32_t successful_packets = 0;
-    uint32_t error_packets = 0;
+     // used in the destructor to determine what to destruct when finished
+     bool started = false;
 
-    //used in the destructor to determine what to destruct when finished
-    bool started = false;
+     // rmt_item32_t* encode_dshot_to_rmt(uint16_t parsed_packet); //rmt_symbol_word_t
+     void encode_dshot_to_rmt(uint16_t parsed_packet);
+     uint16_t calc_dshot_chksum(const dshot_esc_frame_t& dshot_frame);
+     uint32_t decode_eRPM_telemetry_value(uint16_t value);
+     uint32_t erpmToRpm(uint16_t erpm, uint16_t motorPoleCount);
+     // uint16_t prepare_rmt_data(dshot_esc_frame_t& dshot_frame);
 
-    //rmt_item32_t* encode_dshot_to_rmt(uint16_t parsed_packet); //rmt_symbol_word_t
-    void encode_dshot_to_rmt(uint16_t parsed_packet);
-	uint16_t calc_dshot_chksum(const dshot_esc_frame_t& dshot_frame);
-    uint32_t decode_eRPM_telemetry_value(uint16_t value);
-    uint32_t erpmToRpm(uint16_t erpm, uint16_t motorPoleCount);
-	//uint16_t prepare_rmt_data(dshot_esc_frame_t& dshot_frame);
-
-
-    static void handle_error(esp_err_t);
+     static void handle_error(esp_err_t);
 
 
 };
