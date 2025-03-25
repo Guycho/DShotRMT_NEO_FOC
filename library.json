@@ -23,7 +23,7 @@
   },
   "dependencies":
   {
-    // "external-repo": "https://github.com/DrGlaucous/esp-rmt-NEO.git"
+    "Chrono": "https://github.com/SofaPirate/Chrono.git"
   },
   "frameworks": "arduino, espidf",
   "platforms": "espressif32"
