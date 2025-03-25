@@ -113,11 +113,12 @@ static const unsigned char GCR_decode[32] =
 
 
 /// Construct object, but don't populate anything yet
-DShotRMT::DShotRMT() {}
+DShotRMT::DShotRMT(uint16_t delay){dshot_delay = delay;}
 
 /// Construct object with pin number (for backwards compatability)
-DShotRMT::DShotRMT(uint8_t pin) {
-	dshot_config.gpio_num = (gpio_num_t)pin;
+DShotRMT::DShotRMT(uint8_t pin, uint16_t delay) {
+    dshot_config.gpio_num = (gpio_num_t)pin;
+	dshot_delay = delay;
 }
 
 /// Clear constructed variables
