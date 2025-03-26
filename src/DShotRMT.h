@@ -285,6 +285,10 @@ class DShotRMT {
     uint8_t foc_index = 0;
     uint8_t repetition_count = 0;
     const uint8_t REPETITION_MAX = 10;
+    const uint16_t foc_max_value = 600;
+    const uint16_t foc_phase_start[3] = {50, 745, 1440};
+    const uint16_t foc_phase_end[3] = {50 + foc_max_value, 745 + foc_max_value,
+      1440 + foc_max_value};
 
     // thread-safe queue object that the RX callback uses
     QueueHandle_t receive_queue;

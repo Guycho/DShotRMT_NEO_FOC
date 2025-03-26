@@ -302,9 +302,9 @@ void DShotRMT::begin(uint8_t pin, dshot_mode_t dshot_mode, bidirectional_mode_t 
 }
 
 foc_phases_output_t DShotRMT::set_foc_phases(foc_phases_t foc_phases) {
-    m_foc_phases_output.phase_a = foc_phases.phase_a * 663 + 50;
-    m_foc_phases_output.phase_b = foc_phases.phase_b * 663 + 50 + 663;
-    m_foc_phases_output.phase_c = foc_phases.phase_c * 663 + 50 + 663 + 663;
+    m_foc_phases_output.phase_a = foc_phases.phase_a * foc_max_value + foc_phase_start[0];
+    m_foc_phases_output.phase_b = foc_phases.phase_b * foc_max_value + foc_phase_start[1];
+    m_foc_phases_output.phase_c = foc_phases.phase_c * foc_max_value + foc_phase_start[2];
     return m_foc_phases_output;
 }
 
