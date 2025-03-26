@@ -4,7 +4,6 @@
 #include <Arduino.h>
 
 // The RMT (Remote Control) module library is used for generating the DShot signal.
-#include <Chrono.h>
 #include <driver/rmt_rx.h>
 #include <driver/rmt_tx.h>
 
@@ -279,7 +278,6 @@ class DShotRMT {
     void do_foc();
 
    private:
-    Chrono* dshot_timer;   // A timer used to measure the time between DShot packets.
     uint16_t dshot_delay;  // The delay between DShot packets in microseconds.
     foc_phases_output_t m_foc_phases_output = {0, 0, 0};
     uint8_t foc_index = 0;

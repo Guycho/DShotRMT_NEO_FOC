@@ -137,7 +137,6 @@ void DShotRMT::begin(dshot_mode_t dshot_mode, bidirectional_mode_t is_bidirectio
 /// Apply the settings to the RMT backend
 void DShotRMT::begin(uint8_t pin, dshot_mode_t dshot_mode, bidirectional_mode_t is_bidirectional,
   uint16_t magnet_count) {
-    dshot_timer = new Chrono(Chrono::MICROS);
     dshot_config.gpio_num = (gpio_num_t)pin;
 
     // populate bidirection
@@ -309,7 +308,6 @@ foc_phases_output_t DShotRMT::set_foc_phases(foc_phases_t foc_phases) {
 }
 
 void DShotRMT::do_foc() {
-    if (dshot_timer->hasPassed(dshot_delay)) {
         if (foc_index == 0) {
             send_dshot_value(m_foc_phases_output.phase_a);
         } else if (foc_index == 1) {
@@ -327,9 +325,6 @@ void DShotRMT::do_foc() {
         }
         // Send the throttle value using the send_dshot_value function
 
-        // Restart the timer
-        dshot_timer->restart();
-    }
 }
 
 /// Encode and send a throttle value
