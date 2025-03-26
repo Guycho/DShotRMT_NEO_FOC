@@ -245,8 +245,8 @@ typedef struct foc_phases_output_t {
 class DShotRMT {
    public:
     // constructors and destructors
-    DShotRMT(uint16_t delay);
-    DShotRMT(uint8_t pin, uint16_t delay);
+    DShotRMT();
+    DShotRMT(uint8_t pin);
     ~DShotRMT();
 
     // interface commands (with safe defaults)
@@ -276,9 +276,11 @@ class DShotRMT {
     float get_telem_success_rate();
     foc_phases_output_t set_foc_phases(foc_phases_t foc_phases);
     void do_foc();
+    void enable_foc();
+    void disable_foc();
 
    private:
-    uint16_t dshot_delay;  // The delay between DShot packets in microseconds.
+    bool foc_enabled = false;
     foc_phases_output_t m_foc_phases_output = {0, 0, 0};
     uint8_t foc_index = 0;
     uint8_t repetition_count = 0;

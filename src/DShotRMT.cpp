@@ -106,13 +106,10 @@ static const unsigned char GCR_decode[32] = {
 };
 
 /// Construct object, but don't populate anything yet
-DShotRMT::DShotRMT(uint16_t delay) { dshot_delay = delay; }
+DShotRMT::DShotRMT() {}
 
 /// Construct object with pin number (for backwards compatability)
-DShotRMT::DShotRMT(uint8_t pin, uint16_t delay) {
-    dshot_config.gpio_num = (gpio_num_t)pin;
-    dshot_delay = delay;
-}
+DShotRMT::DShotRMT(uint8_t pin) { dshot_config.gpio_num = (gpio_num_t)pin; }
 
 /// Clear constructed variables
 DShotRMT::~DShotRMT() {
@@ -307,24 +304,39 @@ foc_phases_output_t DShotRMT::set_foc_phases(foc_phases_t foc_phases) {
     return m_foc_phases_output;
 }
 
-void DShotRMT::do_foc() {
-        if (foc_index == 0) {
-            send_dshot_value(m_foc_phases_output.phase_a);
-        } else if (foc_index == 1) {
-            send_dshot_value(m_foc_phases_output.phase_b);
-        } else if (foc_index == 2) {
-            send_dshot_value(m_foc_phases_output.phase_c);
-        } else {
-            foc_index = 0;
-        }
-        repetition_count++;
-        if (repetition_count >= REPETITION_MAX) {
-            repetition_count = 0;
-            foc_index++;
-            if (foc_index > 2) foc_index = 0;
-        }
-        // Send the throttle value using the send_dshot_value function
+void DShotRMT::enable_foc() {
+    foc_index = 0;
+    repetition_count = 0;
+    foc_enabled = true;
+}
 
+void DShotRMT::disable_foc() {
+    foc_index = 0;
+    repetition_count = 0;
+    foc_enabled = false;
+}
+
+void DShotRMT::do_foc() {
+    if (!foc_enabled) {
+        send_dshot_value(0);
+        return;
+    }
+    if (foc_index == 0) {
+        send_dshot_value(m_foc_phases_output.phase_a);
+    } else if (foc_index == 1) {
+        send_dshot_value(m_foc_phases_output.phase_b);
+    } else if (foc_index == 2) {
+        send_dshot_value(m_foc_phases_output.phase_c);
+    } else {
+        foc_index = 0;
+    }
+    repetition_count++;
+    if (repetition_count >= REPETITION_MAX) {
+        repetition_count = 0;
+        foc_index++;
+        if (foc_index > 2) foc_index = 0;
+    }
+    // Send the throttle value using the send_dshot_value function
 }
 
 /// Encode and send a throttle value
