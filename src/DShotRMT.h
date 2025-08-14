@@ -4,10 +4,12 @@
 #include <Arduino.h>
 
 // The RMT (Remote Control) module library is used for generating the DShot signal.
+#if ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(5, 0, 0)
 #include <driver/rmt_rx.h>
 #include <driver/rmt_tx.h>
-
-// #include <driver/rmt.h>
+#else
+#include <driver/rmt.h>
+#endif
 
 /// by default, some of these functions are loaded into IRAM so we can send data out from an ISR
 /// if for some reason, you don't want this to happen, define `DSHOT_CONFIG_DONT_USE_IRAM_TX`
